@@ -9,33 +9,7 @@ project(xsens-mvn)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 11)
-
-# Find YARP and include the CMake code to compile plugins
-find_package(YARP REQUIRED)
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
-
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
-
-include(YarpPlugin)
-include(YarpInstallationHelpers)
-set(YARP_FORCE_DYNAMIC_PLUGINS TRUE)
-
-# Helper to install the plugin in PREFIX/yarp.
-yarp_configure_plugins_installation(xsens)
-
-# Compile the plugins by default
-set(COMPILE_BY_DEFAULT ON)
-option(BUILD_SHARED_LIBS ON)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-# YARP experimental interfaces
-add_subdirectory(yarp)
-
-# Shared yarp messages thrifts
-add_subdirectory(msgs)
+set(CMAKE_CXX_STANDARD 17)
 
 if(WIN32)
   option(XSENS_MVN_USE_SDK "Build the driver and the wrapper for the real MVN system using the MVN SDK" OFF)
@@ -51,18 +25,14 @@ if(WIN32)
   endif()
 endif()
 
-option(XSENS_MVN_ENABLE_REMOTES "Build multiplatform yarp clients to remotely control the mvn system" ON)
+option(XSENS_MVN_ENABLE_REMOTES "Build multiplatform yarp clients to remotely control the mvn system" OFF)
 mark_as_advanced(XSENS_MVN_ENABLE_REMOTES)
 if(${XSENS_MVN_ENABLE_REMOTES})
   add_subdirectory(xsensremote)
   add_subdirectory(xsensremotelight)
 endif()
 
-option(XSENS_MVN_ENABLE_PARSER "Build Qt-based multiplatform yarp-independent parser for XSens .mvnx files" OFF)
+option(XSENS_MVN_ENABLE_PARSER "Build Qt-based multiplatform yarp-independent parser for XSens .mvnx files" ON)
 if(${XSENS_MVN_ENABLE_PARSER})
   add_subdirectory(mvnxparser)
 endif()
-
-#### add the "uninstall" target
-include(AddUninstallTarget)
-

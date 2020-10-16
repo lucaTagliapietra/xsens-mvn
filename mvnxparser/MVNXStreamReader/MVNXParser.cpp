@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 {
     QCoreApplication mvnxParser(argc, argv);
     QCoreApplication::setApplicationName("MVNXParser");
-    QCoreApplication::setApplicationVersion("1.0");
+    QCoreApplication::setApplicationVersion("1.1");
 
     // Define available arguments and options for the current program
     // ==============================================================
@@ -32,18 +32,25 @@ int main(int argc, char* argv[])
                                         QCoreApplication::translate("main", "MVNX file to parse"));
 
     // Boolean Option to enable only data for runtime parsing
-    QCommandLineOption runtimeDataOnlyOption(
-        QStringList() << "rdo"
-                      << "runtimeDataOnly",
-        QCoreApplication::translate("main", "Save only runtime data for MAP computation"));
-    optionsParser.addOption(runtimeDataOnlyOption);
+    QCommandLineOption runtimeDataOption(
+        QStringList() << "rd"
+                      << "runtimeData",
+        QCoreApplication::translate("main", "Save  runtime data for MAP computation"));
+    optionsParser.addOption(runtimeDataOption);
 
     // Boolean option to enable only data required for model creation
-    QCommandLineOption modelCreationDataOnlyOption(
-        QStringList() << "mcdo"
-                      << "modelCreationDataOnly",
-        QCoreApplication::translate("main", "Save only HDE/MAP model creation data"));
-    optionsParser.addOption(modelCreationDataOnlyOption);
+    QCommandLineOption modelCreationDataOption(
+        QStringList() << "mcd"
+                      << "modelCreationData",
+        QCoreApplication::translate("main", "Save HDE/MAP model creation data"));
+    optionsParser.addOption(modelCreationDataOption);
+
+    // Boolean option to enable joint angles data only
+    QCommandLineOption jointAnglesOption(
+        QStringList() << "ja"
+                      << "jointAngles",
+        QCoreApplication::translate("main", "Export joint angles data"));
+    optionsParser.addOption(jointAnglesOption);
 
     // Option to enable mvnx validation based on user-provided XSD file
     QCommandLineOption validateSchemaOption(
@@ -124,9 +131,39 @@ int main(int argc, char* argv[])
 
     // create output files
     // ===================
+    bool exportAll = false;
+    if (!optionsParser.isSet(jointAnglesOption) && !optionsParser.isSet(runtimeDataOption)
+        && !optionsParser.isSet(modelCreationDataOption)) {
+        std::cerr << "Nothing selected for export, Exporting everything" << std ::endl;
+        exportAll = true;
+    }
 
-    // if runtimeDataOnly == false print the calibration data
-    if (!optionsParser.isSet(runtimeDataOnlyOption)) {
+    if (optionsParser.isSet(jointAnglesOption) || exportAll) {
+        std::string jointAnglesFile =
+            (outputFolder.absolutePath() + QDir::separator()).toStdString()
+            + inputFileInfo.baseName().toStdString() + "_jointAngles.csv";
+        mvnx.printDataFile(jointAnglesFile,
+                           std::vector<MVNXStreamReader::OutputDataType>{
+                               MVNXStreamReader::OutputDataType::JOINT_ANGLE,
+                           },
+                           ',');
+    }
+
+    // if runtimeDataOnly == true print the runtime data
+    if (optionsParser.isSet(runtimeDataOption) || exportAll) {
+        // print lightweight CSV file containing only a subset of data for runtime computation
+        std::string runtimeDataFile =
+            (outputFolder.absolutePath() + QDir::separator()).toStdString()
+            + inputFileInfo.baseName().toStdString() + "_runtime.csv";
+        mvnx.printDataFile(runtimeDataFile,
+                           std::vector<MVNXStreamReader::OutputDataType>{
+                               MVNXStreamReader::OutputDataType::SENSOR_FREE_BODY_ACCELERATION,
+                           },
+                           ',');
+    }
+
+    // if modelCreationDataOnly == true print model creation data
+    if (optionsParser.isSet(modelCreationDataOption) || exportAll) {
         // print .log file containing model metadata
         std::string metadataLogFile =
             (outputFolder.absolutePath() + QDir::separator()).toStdString()
@@ -154,19 +191,5 @@ int main(int argc, char* argv[])
                            },
                            ',');
     }
-
-    // if modelCreationDataOnly == false print the runtime data
-    if (!optionsParser.isSet(modelCreationDataOnlyOption)) {
-        // print lightweight CSV file containing only a subset of data for runtime computation
-        std::string runtimeDataFile =
-            (outputFolder.absolutePath() + QDir::separator()).toStdString()
-            + inputFileInfo.baseName().toStdString() + "_runtime.csv";
-        mvnx.printDataFile(runtimeDataFile,
-                           std::vector<MVNXStreamReader::OutputDataType>{
-                               MVNXStreamReader::OutputDataType::SENSOR_FREE_BODY_ACCELERATION,
-                           },
-                           ',');
-    }
-
     return EXIT_SUCCESS;
 }

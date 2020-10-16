@@ -7,7 +7,7 @@ project(XMLStreamReader VERSION 0.1.0)
 message (STATUS "${PROJECT_NAME} version ${${PROJECT_NAME}_VERSION}")
 
 # Project configuration
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # Load dependencies
